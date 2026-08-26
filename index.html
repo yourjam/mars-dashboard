@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7EFDD">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mars's Dashboard">
+<title>Mars's Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    background: radial-gradient(ellipse at top, #F7EFDD 0%, #EFE5CC 60%, #E8DBBC 100%);
+    background-attachment: fixed;
+    color: #2A2014;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 28px 20px calc(28px + env(safe-area-inset-bottom));
+  }
+
+  /* ---------- Header ---------- */
+  .eyebrow {
+    display: flex; align-items: center; gap: 6px;
+    color: #8A6A3B; font-size: 11px; font-weight: 600;
+    letter-spacing: .22em; text-transform: uppercase; margin-bottom: 6px;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif; font-weight: 600;
+    font-size: 40px; line-height: 1.05; letter-spacing: -.025em; margin-bottom: 20px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: linear-gradient(135deg, #FDFAF1 0%, #F4EAD2 100%);
+    border: 1px solid rgba(138,106,59,.15);
+    border-radius: 16px; padding: 20px; margin-bottom: 20px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 10px 28px -10px rgba(67,42,15,.2);
+  }
+  .card-today {
+    background: linear-gradient(135deg, #FDFAF1 0%, #F8EBCB 100%);
+    border: 1.5px solid rgba(232,163,23,.45);
+    box-shadow: 0 6px 22px -8px rgba(232,163,23,.3);
+  }
+  .card-soft {
+    background: rgba(253,250,241,.6);
+    border: 1px dashed rgba(138,106,59,.25);
+    box-shadow: none;
+  }
+
+  /* ---------- Weekly total ---------- */
+  .total-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+  .total-label { font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: #8A6A3B; }
+  .total-num {
+    font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: 52px;
+    line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+  }
+  .total-max { font-family: 'Fraunces', serif; font-size: 20px; color: #8A6A3B; }
+
+  .bar { position: relative; height: 8px; border-radius: 99px; background: rgba(138,106,59,.14); margin-bottom: 14px; }
+  .bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 99px; transition: width .5s cubic-bezier(.34,1.56,.64,1); }
+  .bar-mark { position: absolute; top: -4px; bottom: -4px; width: 1px; background: rgba(67,42,15,.3); }
+
+  .tier-now { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+
+  /* ---------- Section labels ---------- */
+  .section-label {
+    font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: 13px;
+    letter-spacing: .16em; text-transform: uppercase; color: #5C4528;
+  }
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 8px; }
+  .section-meta { font-size: 12px; font-weight: 600; color: #8A6A3B; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Stars ---------- */
+  .stars { display: flex; align-items: center; gap: 4px; }
+  .stars-sm { gap: 2px; }
+  .star { transition: all .3s cubic-bezier(.34,1.56,.64,1); }
+  .star.filled { fill: #E8A317; stroke: #D08F0F; filter: drop-shadow(0 1px 2px rgba(232,163,23,.45)); }
+  .star.empty  { fill: transparent; stroke: #D9CCB1; }
+  .star.pop { transform: scale(1.2) rotate(-8deg); }
+
+  /* ---------- Buttons ---------- */
+  .btn-round {
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 99px; border: none;
+    cursor: pointer; transition: transform .12s ease; flex-shrink: 0;
+  }
+  .btn-round:active { transform: scale(.88); }
+  .btn-round:disabled { opacity: .25; cursor: default; }
+  .btn-round.sm { width: 32px; height: 32px; }
+  .btn-plus {
+    background: linear-gradient(135deg,#F3B53D 0%,#E8A317 100%); color: #FFFDF6;
+    box-shadow: 0 3px 8px -1px rgba(232,163,23,.55), 0 1px 0 rgba(255,255,255,.4) inset;
+  }
+  .btn-minus { background: rgba(138,106,59,.1); color: #5C4528; }
+  .btn-row { display: flex; align-items: center; gap: 8px; }
+
+  /* ---------- Today content blocks ---------- */
+  .divider-top { border-top: 1px dashed rgba(138,106,59,.22); padding-top: 16px; margin-top: 16px; }
+  .divider-bottom { border-bottom: 1px dashed rgba(138,106,59,.22); padding-bottom: 16px; margin-bottom: 16px; }
+
+  .block { margin-bottom: 16px; }
+  .block:last-child { margin-bottom: 0; }
+  .block-label {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  }
+
+  .q-text {
+    font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 17px;
+    line-height: 1.4; letter-spacing: -.005em;
+  }
+  .word-term {
+    font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 22px;
+    letter-spacing: -.015em; line-height: 1.1;
+  }
+  .word-def { font-size: 13.5px; color: #5C4528; margin-top: 4px; line-height: 1.4; }
+  .joke-q { font-size: 15px; font-weight: 500; line-height: 1.4; }
+  .joke-btn {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+    padding: 6px 12px; border-radius: 99px; border: none; cursor: pointer;
+    font-family: inherit; font-size: 12px; font-weight: 600; transition: all .2s ease;
+  }
+  .joke-a {
+    font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 500;
+    font-size: 17px; margin-top: 10px; line-height: 1.3;
+  }
+  .chev { transition: transform .2s ease; }
+  .chev.up { transform: rotate(180deg); }
+
+  .video-link {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    text-decoration: none; color: inherit;
+  }
+  .video-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .video-tag { font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; flex-shrink: 0; }
+  .video-name {
+    font-size: 14px; font-weight: 600; color: #3D2F1C;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* ---------- Week rows ---------- */
+  .day-row {
+    background: #FDFAF1; border: 1px solid rgba(138,106,59,.12); border-radius: 12px;
+    padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(67,42,15,.04);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    transition: transform .25s ease;
+  }
+  .day-row.pop { transform: scale(1.008); }
+  .day-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .day-abbr {
+    font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 14px;
+    width: 38px; color: #3D2F1C; flex-shrink: 0;
+  }
+
+  /* ---------- Rewards legend ---------- */
+  .legend-title { font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: #8A6A3B; margin-bottom: 12px; }
+  .legend-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .legend-row:last-child { margin-bottom: 0; }
+  .legend-left { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .legend-range { font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Weekend ---------- */
+  .weekend { text-align: center; padding: 20px; }
+  .weekend-emoji { font-size: 32px; margin-bottom: 4px; }
+  .weekend-title { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 20px; letter-spacing: -.01em; }
+  .weekend-sub { font-size: 14px; color: #5C4528; margin-top: 4px; }
+
+  /* ---------- Reset ---------- */
+  .btn-reset {
+    width: 100%; padding: 12px; border-radius: 12px; cursor: pointer;
+    background: transparent; border: 1px solid rgba(138,106,59,.25); color: #5C4528;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .2s ease;
+  }
+  .btn-reset.confirm { background: rgba(194,65,12,.08); border-color: rgba(194,65,12,.35); color: #C2410C; }
+
+  /* ---------- Footer ---------- */
+  .status { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; }
+  .dot { width: 6px; height: 6px; border-radius: 99px; }
+  .status-text { font-size: 11px; color: #8A6A3B; opacity: .85; }
+  .footnote { text-align: center; font-size: 11px; color: #8A6A3B; opacity: .55; margin-top: 4px; }
+
+  svg { display: block; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+"use strict";
+
+/* ========================================================================
+   DATA
+   ======================================================================== */
+
+const DAYS = [
+  { key:'mon', full:'Monday' },
+  { key:'tue', full:'Tuesday' },
+  { key:'wed', full:'Wednesday' },
+  { key:'thu', full:'Thursday' },
+  { key:'fri', full:'Friday' },
+];
+
+const DEFAULT_DAYS = { mon:3, tue:3, wed:3, thu:3, fri:3 };
+
+const TIERS = [
+  { min:22, label:'Big Reward',         range:'22 – 25', emoji:'🌟', color:'#C2410C' },
+  { min:17, label:'Medium Reward',      range:'17 – 21', emoji:'✨', color:'#B45309' },
+  { min:12, label:'Small Reward',       range:'12 – 16', emoji:'🍪', color:'#6B7F4A' },
+  { min:0,  label:'Fresh Start Monday', range:'under 12', emoji:'🌱', color:'#6B6157' },
+];
+
+const VIDEO_TOPICS = [
+  { label:'Astronomy',        emoji:'💫', url:'https://thekidshouldseethis.com/tagged/astronomy' },
+  { label:'Planets',          emoji:'🪐', url:'https://thekidshouldseethis.com/tagged/planets' },
+  { label:'The Moon',         emoji:'🌔', url:'https://thekidshouldseethis.com/tagged/the-moon' },
+  { label:'Rockets',          emoji:'🚀', url:'https://thekidshouldseethis.com/tagged/rockets' },
+  { label:'Stars',            emoji:'🌟', url:'https://thekidshouldseethis.com/tagged/stars' },
+  { label:'Marine Life',      emoji:'🐙', url:'https://thekidshouldseethis.com/tagged/marine-life' },
+  { label:'Whales',           emoji:'🐋', url:'https://thekidshouldseethis.com/tagged/whales' },
+  { label:'Birds',            emoji:'🦉', url:'https://thekidshouldseethis.com/tagged/birds' },
+  { label:'Insects',          emoji:'🐞', url:'https://thekidshouldseethis.com/tagged/insects' },
+  { label:'Dinosaurs',        emoji:'🦖', url:'https://thekidshouldseethis.com/tagged/dinosaurs' },
+  { label:'Dogs',             emoji:'🐶', url:'https://thekidshouldseethis.com/tagged/dogs' },
+  { label:'Cats',             emoji:'🐈', url:'https://thekidshouldseethis.com/tagged/cats' },
+  { label:'Volcanoes',        emoji:'🌋', url:'https://thekidshouldseethis.com/tagged/volcanoes' },
+  { label:'Rainbows',         emoji:'🌈', url:'https://thekidshouldseethis.com/tagged/rainbows' },
+  { label:'Trees',            emoji:'🌲', url:'https://thekidshouldseethis.com/tagged/tree' },
+  { label:'Flowers',          emoji:'🌸', url:'https://thekidshouldseethis.com/tagged/flowers' },
+  { label:'Fungi',            emoji:'🍄', url:'https://thekidshouldseethis.com/tagged/fungi' },
+  { label:'Snow & Ice',       emoji:'❄️', url:'https://thekidshouldseethis.com/tagged/snow' },
+  { label:'Weather',          emoji:'⚡️', url:'https://thekidshouldseethis.com/tagged/weather' },
+  { label:'Robots',           emoji:'🤖', url:'https://thekidshouldseethis.com/tagged/robot' },
+  { label:'Inventions',       emoji:'💡', url:'https://thekidshouldseethis.com/tagged/inventions' },
+  { label:'Engineering',      emoji:'⚙️', url:'https://thekidshouldseethis.com/tagged/engineering' },
+  { label:'How Things Work',  emoji:'🔧', url:'https://thekidshouldseethis.com/tagged/how-things-are-made' },
+  { label:'Animation',        emoji:'🍿', url:'https://thekidshouldseethis.com/tagged/animation' },
+  { label:'Stop Motion',      emoji:'📸', url:'https://thekidshouldseethis.com/tagged/stop-motion' },
+  { label:'Drawing',          emoji:'✍️', url:'https://thekidshouldseethis.com/tagged/drawing' },
+  { label:'Art Activities',   emoji:'🎨', url:'https://thekidshouldseethis.com/tagged/art-activities' },
+  { label:'Music',            emoji:'🎵', url:'https://thekidshouldseethis.com/tagged/music' },
+  { label:'Instruments',      emoji:'🎹', url:'https://thekidshouldseethis.com/tagged/instruments' },
+  { label:'Dance',            emoji:'💃', url:'https://thekidshouldseethis.com/tagged/dance' },
+  { label:'Cardboard Builds', emoji:'📦', url:'https://thekidshouldseethis.com/tagged/cardboard' },
+  { label:'Recipes',          emoji:'🍲', url:'https://thekidshouldseethis.com/tagged/recipe' },
+  { label:'Optical Illusions',emoji:'🌀', url:'https://thekidshouldseethis.com/tagged/optical-illusions' },
+  { label:'Time Lapse',       emoji:'⏱️', url:'https://thekidshouldseethis.com/tagged/time-lapse' },
+  { label:'Microscopic',      emoji:'🔬', url:'https://thekidshouldseethis.com/tagged/microscopic' },
+  { label:'Chain Reactions',  emoji:'🎯', url:'https://thekidshouldseethis.com/tagged/chain-reaction' },
+];
+
+const QUESTIONS = [
+  "If you could have any superpower, what would it be and why?",
+  "What's one thing you're really good at?",
+  "If animals could talk, what do you think our pet would say?",
+  "What makes someone a good friend?",
+  "If you could invent anything in the whole world, what would you make?",
+  "What's the most beautiful thing you've seen this week?",
+  "If you could time-travel, would you go to the past or the future?",
+  "What would you do if you found a treasure chest?",
+  "What's your favorite memory from this week?",
+  "What do you think dreams are actually made of?",
+  "What's something new you'd like to learn this year?",
+  "If you could live anywhere in the world, where would you pick?",
+  "What's the silliest thing you've ever done?",
+  "What makes you feel brave?",
+  "If you could talk to any wild animal, which one would you choose?",
+  "What do you think the moon smells like?",
+  "If you were in charge for a day, what rule would you make?",
+  "If happiness had a color, what color would it be?",
+  "What's something you did today that you're proud of?",
+  "If you could change one thing about the world, what would you change?",
+  "What's your favorite thing about being almost 7?",
+  "If clouds tasted like a food, what would they taste like?",
+  "What's the best question anyone has ever asked you?",
+  "What do you think you'll be when you grow up?",
+  "What's something that always makes you laugh?",
+  "If you could design your own school, what would it be like?",
+  "What's your favorite thing to do with our family?",
+  "What makes you feel calm inside?",
+  "If you could be any age for one day, what age would you pick?",
+  "What's one kind thing you could do for someone tomorrow?",
+  "If you could keep any wild animal as a pet, what would you pick?",
+  "What's the most interesting thing you learned this week?",
+];
+
+const WORDS = [
+  { word:'Curious',       def:'wanting to know more about something' },
+  { word:'Serendipity',   def:'a lucky, happy surprise' },
+  { word:'Luminous',      def:'glowing with a soft light' },
+  { word:'Metamorphosis', def:'a big change, like a caterpillar becoming a butterfly' },
+  { word:'Constellation', def:'a group of stars that forms a picture in the sky' },
+  { word:'Camouflage',    def:'blending into your surroundings so no one can see you' },
+  { word:'Rambunctious',  def:'loud, wild, and full of playful energy' },
+  { word:'Effervescent',  def:'bubbly and full of life' },
+  { word:'Bamboozle',     def:'to trick or confuse someone' },
+  { word:'Kerfuffle',     def:'a big fuss over something small' },
+  { word:'Nocturnal',     def:'awake and active at night, like owls and bats' },
+  { word:'Ponder',        def:'to think about something slowly and carefully' },
+  { word:'Illuminate',    def:'to shine a light on something' },
+  { word:'Peculiar',      def:'a little bit strange or unusual' },
+  { word:'Whimsical',     def:'playful and full of imagination' },
+  { word:'Fascinating',   def:'so interesting you can hardly look away' },
+  { word:'Enormous',      def:'extremely, incredibly big' },
+  { word:'Minuscule',     def:'extremely, incredibly tiny' },
+  { word:'Imagination',   def:'making pictures and ideas inside your mind' },
+  { word:'Kindness',      def:'being warm and caring toward other people' },
+  { word:'Courage',       def:'being brave even when something feels scary' },
+  { word:'Discover',      def:'to find something for the first time' },
+  { word:'Mysterious',    def:'strange or hard to explain' },
+  { word:'Splendid',      def:'grand, wonderful, and beautiful' },
+  { word:'Wonder',        def:'a feeling of amazement at something new' },
+  { word:'Gleaming',      def:'shining bright and clean' },
+  { word:'Delightful',    def:'lovely in a way that makes you smile' },
+  { word:'Radiant',       def:'shining brightly, often with happiness' },
+  { word:'Adventure',     def:'an exciting or unusual experience' },
+  { word:'Persistent',    def:'not giving up, even when it gets hard' },
+  { word:'Generous',      def:'happy to share what you have with others' },
+  { word:'Marvelous',     def:'amazing and wonderful' },
+];
+
+const JOKES = [
+  { q:"What do you call a bear with no teeth?", a:"A gummy bear!" },
+  { q:"What do you call cheese that isn't yours?", a:"Nacho cheese!" },
+  { q:"Why did the math book look so sad?", a:"Because it had too many problems!" },
+  { q:"What do you call a fish wearing a bowtie?", a:"Sofishticated!" },
+  { q:"Why did the cookie go to the doctor?", a:"It was feeling crummy!" },
+  { q:"What did one wall say to the other wall?", a:"I'll meet you at the corner!" },
+  { q:"Why can't a bicycle stand up by itself?", a:"It's two-tired!" },
+  { q:"What do you call a sleeping bull?", a:"A bulldozer!" },
+  { q:"What do you call a dinosaur with a giant vocabulary?", a:"A thesaurus!" },
+  { q:"Why did the banana go to the doctor?", a:"Because it wasn't peeling well!" },
+  { q:"What kind of tree fits in your hand?", a:"A palm tree!" },
+  { q:"Why did the scarecrow win an award?", a:"Because he was outstanding in his field!" },
+  { q:"What's brown and sticky?", a:"A stick!" },
+  { q:"How does the moon cut his hair?", a:"Eclipse it!" },
+  { q:"Why don't eggs tell jokes?", a:"They'd crack each other up!" },
+  { q:"What did the ocean say to the shore?", a:"Nothing — it just waved!" },
+  { q:"What has ears but cannot hear?", a:"A cornfield!" },
+  { q:"Why do bees have sticky hair?", a:"Because they use honey combs!" },
+  { q:"What did one plate say to the other?", a:"Dinner's on me!" },
+  { q:"What do you call a dog magician?", a:"A labra-cadabra-dor!" },
+  { q:"What kind of shoes do frogs wear?", a:"Open toad!" },
+  { q:"Why did the picture go to jail?", a:"It was framed!" },
+  { q:"What do you call a fake noodle?", a:"An impasta!" },
+  { q:"Why did the tomato turn red?", a:"Because it saw the salad dressing!" },
+  { q:"What's a cat's favorite dessert?", a:"Chocolate mousse!" },
+  { q:"Why don't skeletons fight each other?", a:"They don't have the guts!" },
+  { q:"What do elves learn in school?", a:"The elf-abet!" },
+  { q:"Why was 6 afraid of 7?", a:"Because 7, 8, 9!" },
+  { q:"What do you call a snowman on a hot day?", a:"A puddle!" },
+  { q:"What do you get when you cross a snowman with a vampire?", a:"Frostbite!" },
+  { q:"Why did the golfer wear two pairs of pants?", a:"In case he got a hole in one!" },
+  { q:"What's a pirate's favorite letter?", a:"You'd think it's R, but their true love is the C!" },
+];
+
+const ACCENT = {
+  question: '#8B5A9F',
+  word:     '#2E6E7A',
+  joke:     '#B85450',
+  video:    '#6B7F4A',
+};
+
+/* ========================================================================
+   STORAGE
+   ======================================================================== */
+
+const LS_KEY = 'mars-dashboard:state';
+const memoryStore = {};
+let storageMode = 'memory';
+
+function hasLS() {
+  try {
+    if (!window.localStorage) return false;
+    window.localStorage.setItem('__t','1');
+    window.localStorage.removeItem('__t');
+    return true;
+  } catch (e) { return false; }
+}
+
+function loadState() {
+  if (hasLS()) {
+    try {
+      storageMode = 'local';
+      const v = window.localStorage.getItem(LS_KEY);
+      return v ? JSON.parse(v) : null;
+    } catch (e) {}
+  }
+  storageMode = 'memory';
+  try { return memoryStore[LS_KEY] ? JSON.parse(memoryStore[LS_KEY]) : null; }
+  catch (e) { return null; }
+}
+
+function saveState(obj) {
+  const json = JSON.stringify(obj);
+  if (hasLS()) {
+    try { window.localStorage.setItem(LS_KEY, json); storageMode = 'local'; return; }
+    catch (e) {}
+  }
+  memoryStore[LS_KEY] = json;
+  storageMode = 'memory';
+}
+
+/* ========================================================================
+   CONTENT ROTATION
+   ======================================================================== */
+
+function pickN(pool, n) {
+  const copy = pool.slice();
+  const out = [];
+  for (let i = 0; i < n && copy.length; i++) {
+    out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
+  }
+  return out;
+}
+
+function rollWeekContent() {
+  const v = pickN(VIDEO_TOPICS, DAYS.length);
+  const q = pickN(QUESTIONS, DAYS.length);
+  const w = pickN(WORDS, DAYS.length);
+  const j = pickN(JOKES, DAYS.length);
+  const content = {};
+  DAYS.forEach((d, i) => {
+    content[d.key] = { video: v[i], question: q[i], word: w[i], joke: j[i] };
+  });
+  return content;
+}
+
+/* ========================================================================
+   HELPERS
+   ======================================================================== */
+
+const getTier = total => TIERS.find(t => total >= t.min);
+
+function getTodayKey() {
+  const d = new Date().getDay();
+  return (d >= 1 && d <= 5) ? DAYS[d-1].key : null;
+}
+
+function formatDate() {
+  return new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+/* ---- Inline SVG icons ---- */
+function starSVG(filled, size, popping) {
+  const cls = 'star ' + (filled ? 'filled' : 'empty') + (popping && filled ? ' pop' : '');
+  return '<svg class="'+cls+'" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">' +
+    '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+}
+const ICON = {
+  plus:  s => '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  minus: s => '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  sparkles: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10.7l-6.1 1.9L12 18.4l-1.9-5.8L4 10.7l6.1-1.9z"/></svg>',
+  help: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  book: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  smile: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+  film: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="7" y1="3" x2="7" y2="21"/><line x1="17" y1="3" x2="17" y2="21"/><line x1="2" y1="12" x2="22" y2="12"/></svg>',
+  arrow: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>',
+  chevron: up => '<svg class="chev'+(up?' up':'')+'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+  reset: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+};
+
+/* ========================================================================
+   STATE
+   ======================================================================== */
+
+let state = { days: Object.assign({}, DEFAULT_DAYS), weekContent: null };
+let jokeRevealed = false;
+let confirmReset = false;
+let confirmTimer = null;
+let popDay = null;
+
+(function init() {
+  const saved = loadState();
+  if (saved) {
+    if (saved.days) state.days = Object.assign({}, DEFAULT_DAYS, saved.days);
+    state.weekContent = saved.weekContent || rollWeekContent();
+  } else {
+    state.weekContent = rollWeekContent();
+  }
+})();
+
+function persist() {
+  saveState({ days: state.days, weekContent: state.weekContent, updatedAt: Date.now() });
+}
+
+/* ========================================================================
+   ACTIONS
+   ======================================================================== */
+
+function adjust(key, delta) {
+  const next = Math.max(0, Math.min(5, state.days[key] + delta));
+  if (next === state.days[key]) return;
+  state.days[key] = next;
+  popDay = key;
+  persist();
+  render();
+  setTimeout(() => { popDay = null; render(); }, 350);
+}
+
+function toggleJoke() { jokeRevealed = !jokeRevealed; render(); }
+
+function handleReset() {
+  if (confirmReset) {
+    state.days = Object.assign({}, DEFAULT_DAYS);
+    state.weekContent = rollWeekContent();
+    jokeRevealed = false;
+    confirmReset = false;
+    clearTimeout(confirmTimer);
+    persist();
+    render();
+  } else {
+    confirmReset = true;
+    render();
+    clearTimeout(confirmTimer);
+    confirmTimer = setTimeout(() => { confirmReset = false; render(); }, 3000);
+  }
+}
+
+/* ========================================================================
+   RENDER
+   ======================================================================== */
+
+function starsHTML(count, size, popping) {
+  let s = '';
+  for (let i = 1; i <= 5; i++) s += starSVG(i <= count, size, popping);
+  return s;
+}
+
+function btnHTML(key, kind, disabled, small) {
+  const cls = 'btn-round ' + (kind === 'plus' ? 'btn-plus' : 'btn-minus') + (small ? ' sm' : '');
+  const size = small ? 14 : 17;
+  const delta = kind === 'plus' ? 1 : -1;
+  return '<button class="'+cls+'" '+(disabled?'disabled':'')+
+    ' onclick="adjust(\''+key+'\','+delta+')"'+
+    ' aria-label="'+(kind==='plus'?'Add':'Remove')+' star">'+ICON[kind](size)+'</button>';
+}
+
+function render() {
+  const todayKey = getTodayKey();
+  const total = DAYS.reduce((sum, d) => sum + state.days[d.key], 0);
+  const tier = getTier(total);
+  const pct = (total / 25) * 100;
+  const today = todayKey ? state.weekContent[todayKey] : null;
+
+  let html = '';
+
+  /* Header */
+  html += '<div class="eyebrow">'+ICON.sparkles+'<span>'+esc(formatDate())+'</span></div>';
+  html += '<h1>Mars’s Dashboard</h1>';
+
+  /* Weekly total */
+  html += '<div class="card">'
+       +   '<div class="total-row">'
+       +     '<span class="total-label">This Week</span>'
+       +     '<div style="display:flex;align-items:baseline;gap:4px">'
+       +       '<span class="total-num">'+total+'</span>'
+       +       '<span class="total-max">/ 25</span>'
+       +     '</div>'
+       +   '</div>'
+       +   '<div class="bar">'
+       +     '<div class="bar-fill" style="width:'+pct+'%;background:linear-gradient(90deg,'+tier.color+'AA,'+tier.color+');box-shadow:0 0 8px '+tier.color+'55"></div>'
+       +     [12,17,22].map(m => '<div class="bar-mark" style="left:'+((m/25)*100)+'%"></div>').join('')
+       +   '</div>'
+       +   '<div class="tier-now"><span style="font-size:20px">'+tier.emoji+'</span>'
+       +     '<span style="color:'+tier.color+'">'+esc(tier.label)+'</span></div>'
+       + '</div>';
+
+  /* Today */
+  if (today) {
+    const dayName = DAYS.find(d => d.key === todayKey).full;
+    const popping = popDay === todayKey;
+
+    html += '<div class="section-head">'
+         +   '<span class="section-label">Today · '+esc(dayName)+'</span>'
+         +   '<span class="section-meta">'+state.days[todayKey]+' / 5 stars</span>'
+         + '</div>';
+
+    html += '<div class="card card-today">';
+
+    /* stars row */
+    html += '<div class="divider-bottom" style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+         +   '<div class="stars">'+starsHTML(state.days[todayKey], 28, popping)+'</div>'
+         +   '<div class="btn-row">'
+         +     btnHTML(todayKey,'minus', state.days[todayKey]===0, false)
+         +     btnHTML(todayKey,'plus',  state.days[todayKey]===5, false)
+         +   '</div>'
+         + '</div>';
+
+    /* question */
+    html += '<div class="block">'
+         +   '<div class="block-label" style="color:'+ACCENT.question+'">'+ICON.help+'<span>Question</span></div>'
+         +   '<p class="q-text">'+esc(today.question)+'</p>'
+         + '</div>';
+
+    /* word */
+    html += '<div class="block">'
+         +   '<div class="block-label" style="color:'+ACCENT.word+'">'+ICON.book+'<span>Word of the Day</span></div>'
+         +   '<div class="word-term">'+esc(today.word.word)+'</div>'
+         +   '<div class="word-def">'+esc(today.word.def)+'</div>'
+         + '</div>';
+
+    /* joke */
+    html += '<div class="block">'
+         +   '<div class="block-label" style="color:'+ACCENT.joke+'">'+ICON.smile+'<span>Joke</span></div>'
+         +   '<p class="joke-q">'+esc(today.joke.q)+'</p>'
+         +   '<button class="joke-btn" onclick="toggleJoke()" style="'
+         +     'background:'+(jokeRevealed?'transparent':ACCENT.joke+'18')+';'
+         +     'color:'+ACCENT.joke+';'
+         +     'border:'+(jokeRevealed?'1px dashed '+ACCENT.joke+'55':'none')+'">'
+         +     ICON.chevron(jokeRevealed)
+         +     (jokeRevealed ? 'Hide answer' : 'Tap for the punchline')
+         +   '</button>';
+    if (jokeRevealed) {
+      html += '<p class="joke-a" style="color:'+ACCENT.joke+'">'+esc(today.joke.a)+'</p>';
+    }
+    html += '</div>';
+
+    /* video */
+    html += '<a class="video-link divider-top" href="'+esc(today.video.url)+'" target="_blank" rel="noopener noreferrer">'
+         +   '<span class="video-left">'
+         +     '<span style="color:'+ACCENT.video+'">'+ICON.film+'</span>'
+         +     '<span class="video-tag" style="color:'+ACCENT.video+'">Video</span>'
+         +     '<span style="font-size:16px">'+today.video.emoji+'</span>'
+         +     '<span class="video-name">'+esc(today.video.label)+'</span>'
+         +   '</span>'
+         +   '<span style="color:'+ACCENT.video+'">'+ICON.arrow+'</span>'
+         + '</a>';
+
+    html += '</div>';
+  } else {
+    html += '<div class="card card-soft weekend">'
+         +   '<div class="weekend-emoji">🌤️</div>'
+         +   '<div class="weekend-title">It’s the weekend!</div>'
+         +   '<div class="weekend-sub">A new question, word, joke, and video wait on Monday.</div>'
+         + '</div>';
+  }
+
+  /* The week */
+  html += '<div class="section-head"><span class="section-label">The Week</span></div>';
+  DAYS.filter(d => d.key !== todayKey).forEach(d => {
+    const c = state.days[d.key];
+    const popping = popDay === d.key;
+    html += '<div class="day-row'+(popping?' pop':'')+'">'
+         +   '<div class="day-left">'
+         +     '<span class="day-abbr">'+d.full.slice(0,3)+'</span>'
+         +     '<div class="stars stars-sm">'+starsHTML(c, 17, popping)+'</div>'
+         +   '</div>'
+         +   '<div class="btn-row">'
+         +     btnHTML(d.key,'minus', c===0, true)
+         +     btnHTML(d.key,'plus',  c===5, true)
+         +   '</div>'
+         + '</div>';
+  });
+
+  /* Rewards legend */
+  html += '<div class="card card-soft" style="margin-top:20px">'
+       +   '<div class="legend-title">Friday Rewards</div>';
+  TIERS.forEach(t => {
+    const cur = tier.min === t.min;
+    html += '<div class="legend-row">'
+         +   '<span class="legend-left"><span style="font-size:16px">'+t.emoji+'</span>'
+         +     '<span style="color:'+(cur?t.color:'#5C4528')+';font-weight:'+(cur?700:500)+'">'+esc(t.label)+'</span></span>'
+         +   '<span class="legend-range" style="color:'+(cur?t.color:'#8A6A3B')+';opacity:'+(cur?1:.75)+'">'+esc(t.range)+'</span>'
+         + '</div>';
+  });
+  html += '</div>';
+
+  /* Reset */
+  html += '<button class="btn-reset'+(confirmReset?' confirm':'')+'" onclick="handleReset()">'
+       +   ICON.reset
+       +   (confirmReset ? 'Tap again to confirm' : 'Start New Week')
+       + '</button>';
+
+  /* Status */
+  const ok = storageMode === 'local';
+  html += '<div class="status">'
+       +   '<span class="dot" style="background:'+(ok?'#6B7F4A':'#B45309')+';box-shadow:0 0 6px '+(ok?'rgba(107,127,74,.6)':'rgba(180,83,9,.6)')+'"></span>'
+       +   '<span class="status-text">'+(ok?'Saved on this device':'Saving unavailable — changes reset on reload')+'</span>'
+       + '</div>'
+       + '<div class="footnote">Days start at 3 stars · Everything refreshes on Monday</div>';
+
+  document.getElementById('app').innerHTML = html;
+}
+
+/* Re-render at midnight so "today" rolls over without a manual refresh */
+(function scheduleMidnight() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5);
+  setTimeout(() => { jokeRevealed = false; render(); scheduleMidnight(); }, next - now);
+})();
+
+/* Re-render when the tab regains focus (covers phone unlock / app switch) */
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+
+render();
+</script>
+</body>
+</html>
