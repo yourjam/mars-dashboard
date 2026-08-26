@@ -215,6 +215,42 @@
   .status-text { font-size: 11px; color: var(--ink-faint); }
   .footnote { text-align: center; font-size: 11px; color: var(--ink-faint); opacity: .7; margin-top: 4px; }
 
+  /* ---------- Countdown ---------- */
+  .countdown-banner {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--accent-soft); border: 1px solid var(--accent-line);
+    border-radius: 99px; padding: 9px 14px; margin-bottom: 18px;
+    font-size: 12.5px; font-weight: 700; color: var(--accent);
+  }
+
+  /* ---------- Streak chip ---------- */
+  .streak-chip {
+    margin-top: 10px; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 700; color: var(--accent-strong);
+    background: var(--accent-soft); padding: 4px 10px; border-radius: 99px;
+  }
+
+  /* ---------- Buddy ---------- */
+  .buddy-row { display: flex; align-items: center; gap: 16px; }
+  .buddy-emoji { font-size: 44px; line-height: 1; flex-shrink: 0; }
+  .buddy-info { flex: 1; min-width: 0; }
+  .buddy-name { font-weight: 800; font-size: 16px; color: var(--ink); }
+  .buddy-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .buddy-bar { margin-top: 8px; margin-bottom: 4px; }
+  .buddy-next { font-size: 11.5px; color: var(--ink-faint); }
+
+  /* ---------- Reading ---------- */
+  .read-btn {
+    width: 100%; padding: 10px; border-radius: 99px; cursor: pointer;
+    background: var(--canvas); border: 1px solid var(--line); color: var(--ink-soft);
+    font-family: inherit; font-size: 13px; font-weight: 700; transition: all .2s ease;
+  }
+  .read-btn.on { background: var(--good-soft); border-color: rgba(16,185,129,.4); color: var(--good); }
+  .read-grid { display: grid; grid-template-rows: repeat(7, 11px); grid-auto-flow: column; gap: 3px; overflow-x: auto; margin-top: 14px; }
+  .read-cell { width: 11px; height: 11px; border-radius: 2px; background: var(--line); }
+  .read-cell.on { background: var(--good); box-shadow: 0 0 4px rgba(16,185,129,.45); }
+  .read-cell.future { visibility: hidden; }
+
   svg { display: block; flex-shrink: 0; }
 </style>
 </head>
@@ -396,6 +432,20 @@ const ACCENT = {
   video:    '#10b981',
 };
 
+const AVATAR_STAGES = [
+  { min:0,   emoji:'🥚', name:'Mystery Egg' },
+  { min:10,  emoji:'🐣', name:'Hatchling' },
+  { min:25,  emoji:'🐥', name:'Chick' },
+  { min:50,  emoji:'🦉', name:'Young Owl' },
+  { min:90,  emoji:'🦅', name:'Soaring Eagle' },
+  { min:150, emoji:'🐉', name:'Baby Dragon' },
+  { min:250, emoji:'🌟', name:'Superstar' },
+];
+
+const COUNTDOWNS = [
+  { label: "Mars's Birthday", month: 2, day: 18, emoji: '🎂' },
+];
+
 /* ========================================================================
    STORAGE
    ======================================================================== */
@@ -481,6 +531,70 @@ function esc(s) {
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
+function dateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+function computeStarStreak() {
+  let streak = 0;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  while (true) {
+    const dow = cursor.getDay();
+    if (dow === 0 || dow === 6) { cursor.setDate(cursor.getDate() - 1); continue; }
+    const val = state.history[dateKey(cursor)];
+    if (val === undefined || val < 3) break;
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function getAvatarStage(total) {
+  let stage = AVATAR_STAGES[0], idx = 0;
+  for (let i = 0; i < AVATAR_STAGES.length; i++) {
+    if (total >= AVATAR_STAGES[i].min) { stage = AVATAR_STAGES[i]; idx = i; }
+  }
+  return { stage, next: AVATAR_STAGES[idx + 1] || null };
+}
+
+function computeReadingStreak() {
+  let streak = 0;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  while (state.reading[dateKey(cursor)]) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function buildReadingGrid(weeks) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - (weeks * 7 - 1));
+  start.setDate(start.getDate() - start.getDay());
+  const cells = [];
+  const cursor = new Date(start);
+  while (cursor <= today) {
+    cells.push({ read: !!state.reading[dateKey(cursor)], future: cursor > today });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return cells;
+}
+
+function daysUntil(month, day) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  let target = new Date(now.getFullYear(), month - 1, day);
+  if (target < now) target = new Date(now.getFullYear() + 1, month - 1, day);
+  return Math.round((target - now) / 86400000);
+}
+
 /* ---- Inline SVG icons ---- */
 function starSVG(filled, size, popping) {
   const cls = 'star ' + (filled ? 'filled' : 'empty') + (popping && filled ? ' pop' : '');
@@ -504,7 +618,7 @@ const ICON = {
    STATE
    ======================================================================== */
 
-let state = { days: Object.assign({}, DEFAULT_DAYS), weekContent: null };
+let state = { days: Object.assign({}, DEFAULT_DAYS), weekContent: null, lifetimeStars: 0, history: {}, reading: {} };
 let jokeRevealed = false;
 let confirmReset = false;
 let confirmTimer = null;
@@ -515,6 +629,9 @@ let popDay = null;
   if (saved) {
     if (saved.days) state.days = Object.assign({}, DEFAULT_DAYS, saved.days);
     state.weekContent = saved.weekContent || rollWeekContent();
+    state.lifetimeStars = saved.lifetimeStars || 0;
+    state.history = saved.history || {};
+    state.reading = saved.reading || {};
   } else {
     state.weekContent = rollWeekContent();
   }
@@ -522,7 +639,16 @@ let popDay = null;
 })();
 
 function persist() {
-  saveState({ days: state.days, weekContent: state.weekContent, updatedAt: Date.now() });
+  const todayKey = getTodayKey();
+  if (todayKey) state.history[dateKey(new Date())] = state.days[todayKey];
+  saveState({
+    days: state.days,
+    weekContent: state.weekContent,
+    lifetimeStars: state.lifetimeStars,
+    history: state.history,
+    reading: state.reading,
+    updatedAt: Date.now(),
+  });
 }
 
 /* ========================================================================
@@ -532,6 +658,7 @@ function persist() {
 function adjust(key, delta) {
   const next = Math.max(0, Math.min(5, state.days[key] + delta));
   if (next === state.days[key]) return;
+  if (next > state.days[key]) state.lifetimeStars += (next - state.days[key]);
   state.days[key] = next;
   popDay = key;
   persist();
@@ -540,6 +667,14 @@ function adjust(key, delta) {
 }
 
 function toggleJoke() { jokeRevealed = !jokeRevealed; render(); }
+
+function toggleReadToday() {
+  const key = dateKey(new Date());
+  if (state.reading[key]) delete state.reading[key];
+  else state.reading[key] = true;
+  persist();
+  render();
+}
 
 function handleReset() {
   if (confirmReset) {
@@ -590,7 +725,17 @@ function render() {
   html += '<div class="eyebrow">'+ICON.sparkles+'<span>'+esc(formatDate())+'</span></div>';
   html += '<h1>Mars’s Dashboard</h1>';
 
+  /* Countdown */
+  const cd = COUNTDOWNS[0];
+  const cdDays = daysUntil(cd.month, cd.day);
+  html += '<div class="countdown-banner">'
+       +   (cdDays === 0
+             ? '🎉 Today is ' + esc(cd.label) + '!'
+             : cd.emoji + ' ' + cdDays + ' day' + (cdDays === 1 ? '' : 's') + ' until ' + esc(cd.label))
+       + '</div>';
+
   /* Weekly total */
+  const starStreak = computeStarStreak();
   html += '<div class="card">'
        +   '<div class="total-row">'
        +     '<span class="total-label">This Week</span>'
@@ -605,6 +750,7 @@ function render() {
        +   '</div>'
        +   '<div class="tier-now"><span style="font-size:20px">'+tier.emoji+'</span>'
        +     '<span style="color:'+tier.color+'">'+esc(tier.label)+'</span></div>'
+       +   (starStreak > 0 ? '<div class="streak-chip">🔥 '+starStreak+'-day streak</div>' : '')
        + '</div>';
 
   /* Today */
@@ -693,6 +839,43 @@ function render() {
          +   '</div>'
          + '</div>';
   });
+
+  /* Growth */
+  html += '<div class="section-head" style="margin-top:20px"><span class="section-label">Growth</span></div>';
+
+  const { stage, next } = getAvatarStage(state.lifetimeStars);
+  const toNext = next ? next.min - state.lifetimeStars : 0;
+  const buddyPct = next ? Math.min(100, ((state.lifetimeStars - stage.min) / (next.min - stage.min)) * 100) : 100;
+  html += '<div class="card">'
+       +   '<div class="section-label" style="margin-bottom:10px">Mars’s Buddy</div>'
+       +   '<div class="buddy-row">'
+       +     '<div class="buddy-emoji">'+stage.emoji+'</div>'
+       +     '<div class="buddy-info">'
+       +       '<div class="buddy-name">'+esc(stage.name)+'</div>'
+       +       '<div class="buddy-sub">'+state.lifetimeStars+' stars earned all-time</div>'
+       +       (next
+             ? '<div class="bar buddy-bar"><div class="bar-fill" style="width:'+buddyPct+'%;background:var(--accent)"></div></div>'
+               + '<div class="buddy-next">'+toNext+' more to become a '+esc(next.name)+'</div>'
+             : '<div class="buddy-next">Max stage reached! 🎉</div>')
+       +     '</div>'
+       +   '</div>'
+       + '</div>';
+
+  const readToday = !!state.reading[dateKey(new Date())];
+  const readingStreak = computeReadingStreak();
+  const readGrid = buildReadingGrid(12);
+  html += '<div class="card">'
+       +   '<div class="section-head" style="margin:0 0 12px">'
+       +     '<span class="section-label">Reading</span>'
+       +     (readingStreak > 0 ? '<span class="section-meta">🔥 '+readingStreak+'-day streak</span>' : '')
+       +   '</div>'
+       +   '<button class="read-btn'+(readToday?' on':'')+'" onclick="toggleReadToday()">'
+       +     (readToday ? '✓ Read today' : '📖 Mark today as read')
+       +   '</button>'
+       +   '<div class="read-grid">'
+       +     readGrid.map(c => '<div class="read-cell'+(c.read?' on':'')+(c.future?' future':'')+'"></div>').join('')
+       +   '</div>'
+       + '</div>';
 
   /* Rewards legend */
   html += '<div class="card card-soft" style="margin-top:20px">'
