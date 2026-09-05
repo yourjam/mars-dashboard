@@ -223,6 +223,41 @@
     font-size: 12.5px; font-weight: 700; color: var(--accent);
   }
 
+  /* ---------- School news ---------- */
+  .school-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--line);
+  }
+  .school-row:last-of-type { border-bottom: none; padding-bottom: 4px; }
+  .school-icon { font-size: 15px; line-height: 1.3; flex-shrink: 0; width: 18px; text-align: center; }
+  .school-body { min-width: 0; flex: 1; }
+  .school-title { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+  .school-note { font-size: 12px; color: var(--ink-soft); margin-top: 2px; line-height: 1.35; }
+  .school-when {
+    flex-shrink: 0; font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+    padding: 3px 8px; border-radius: 99px; white-space: nowrap;
+    background: var(--line); color: var(--ink-soft);
+  }
+  .school-when.soon {
+    background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-line);
+  }
+  .school-when.open {
+    background: var(--good-soft); color: var(--good);
+  }
+  .school-recurring {
+    margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line);
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .recur-chip {
+    font-size: 11px; font-weight: 600; color: var(--ink-faint);
+    background: var(--canvas); border: 1px solid var(--line);
+    padding: 4px 9px; border-radius: 99px;
+  }
+  .recur-chip.today {
+    color: var(--accent); background: var(--accent-soft);
+    border-color: var(--accent-line); font-weight: 700;
+  }
+
   /* ---------- Streak chip ---------- */
   .streak-chip {
     margin-top: 10px; display: inline-flex; align-items: center; gap: 6px;
@@ -341,7 +376,7 @@ const QUESTIONS = [
   "If happiness had a color, what color would it be?",
   "What's something you did today that you're proud of?",
   "If you could change one thing about the world, what would you change?",
-  "What's your favorite thing about being almost 7?",
+  "What's your favorite thing about being the age you are now?",
   "If clouds tasted like a food, what would they taste like?",
   "What's the best question anyone has ever asked you?",
   "What do you think you'll be when you grow up?",
@@ -444,6 +479,35 @@ const AVATAR_STAGES = [
 
 const COUNTDOWNS = [
   { label: "Mars's Birthday", month: 2, day: 18, emoji: '🎂' },
+];
+
+/* ========================================================================
+   SCHOOL NEWS — from Mrs. Hanson's weekly First Grade News emails.
+   To refresh: replace the entries below with the new week's items.
+   - date: 'YYYY-MM-DD' for a specific day, or null for an open action item
+     (open items pin to the top with a bell icon until removed).
+   - Items drop off automatically the day after their date passes.
+   - Items further out than SCHOOL_NEWS_WINDOW_DAYS stay hidden until closer.
+   Last updated from: First Grade News #4 (Sep 4, 2026)
+   ======================================================================== */
+const SCHOOL_NEWS_WINDOW_DAYS = 14;
+
+const SCHOOL_NEWS = [
+  { date: null,         title: 'Sign up for parent-teacher conference', note: 'Room 18 · 20 min slots · link in teacher email' },
+  { date: '2026-09-07', title: 'No School — Labor Day',                 note: '' },
+  { date: '2026-09-09', title: 'Fort Day!',                             note: 'Bring a clean sheet, towel, or blanket in its own bag' },
+  { date: '2026-09-11', title: 'Frozen Friday',                         note: 'Popsicle cart by the kindergarten gate' },
+  { date: '2026-09-25', title: 'Frozen Friday',                         note: 'Popsicle cart by the kindergarten gate' },
+  { date: '2026-09-30', title: 'September reading calendar due',        note: 'Turn in on time to earn a prize' },
+  { date: '2026-10-02', title: 'Frozen Friday',                         note: 'Popsicle cart by the kindergarten gate' },
+  { date: '2026-10-09', title: 'Frozen Friday',                         note: 'Popsicle cart by the kindergarten gate' },
+  { date: '2026-10-19', title: 'Early dismissal week begins',           note: 'Runs through Oct 23' },
+];
+
+/* Weekly rhythms — shown as a quiet footer line, highlighted on their day */
+const RECURRING_SCHOOL = [
+  { label: 'Library books due',          dayIndex: 5 },  /* Friday */
+  { label: 'Friday folder back to school', dayIndex: 1 },  /* Monday */
 ];
 
 /* ========================================================================
@@ -585,6 +649,37 @@ function buildReadingGrid(weeks) {
     cursor.setDate(cursor.getDate() + 1);
   }
   return cells;
+}
+
+/* Returns school news items worth showing right now:
+   open action items first, then dated items within the window, soonest first. */
+function getSchoolNews() {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const open = [];
+  const dated = [];
+
+  SCHOOL_NEWS.forEach(item => {
+    if (!item.date) { open.push({ item, days: null }); return; }
+    const parts = item.date.split('-');
+    const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    d.setHours(0, 0, 0, 0);
+    const days = Math.round((d - now) / 86400000);
+    if (days < 0) return;                         /* already passed */
+    if (days > SCHOOL_NEWS_WINDOW_DAYS) return;   /* too far out */
+    dated.push({ item, days });
+  });
+
+  dated.sort((a, b) => a.days - b.days);
+  return open.concat(dated);
+}
+
+function whenLabel(days) {
+  if (days === null) return '';
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  return 'in ' + days + ' days';
 }
 
 function daysUntil(month, day) {
@@ -733,6 +828,51 @@ function render() {
              ? '🎉 Today is ' + esc(cd.label) + '!'
              : cd.emoji + ' ' + cdDays + ' day' + (cdDays === 1 ? '' : 's') + ' until ' + esc(cd.label))
        + '</div>';
+
+  /* School news */
+  const schoolItems = getSchoolNews();
+  const todayDow = new Date().getDay();
+  if (schoolItems.length || RECURRING_SCHOOL.length) {
+    html += '<div class="section-head"><span class="section-label">This Week at School</span></div>';
+    html += '<div class="card">';
+
+    schoolItems.forEach(entry => {
+      const it = entry.item;
+      const isOpen = entry.days === null;
+      const soon = !isOpen && entry.days <= 1;
+      const icon = isOpen ? '🔔' : (soon ? '⭐' : '📅');
+      const chipCls = isOpen ? 'open' : (soon ? 'soon' : '');
+      const chipTxt = isOpen ? 'To do' : whenLabel(entry.days);
+
+      html += '<div class="school-row">'
+           +   '<span class="school-icon">'+icon+'</span>'
+           +   '<span class="school-body">'
+           +     '<div class="school-title">'+esc(it.title)+'</div>'
+           +     (it.note ? '<div class="school-note">'+esc(it.note)+'</div>' : '')
+           +   '</span>'
+           +   '<span class="school-when '+chipCls+'">'+esc(chipTxt)+'</span>'
+           + '</div>';
+    });
+
+    if (!schoolItems.length) {
+      html += '<div class="school-note" style="padding:4px 0">Nothing coming up in the next two weeks.</div>';
+    }
+
+    if (RECURRING_SCHOOL.length) {
+      html += '<div class="school-recurring">';
+      RECURRING_SCHOOL.forEach(r => {
+        const isToday = r.dayIndex === todayDow;
+        html += '<span class="recur-chip'+(isToday?' today':'')+'">'
+             +    (isToday ? '● ' : '')
+             +    esc(r.label)
+             +    (isToday ? ' — today' : '')
+             +  '</span>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+  }
 
   /* Weekly total */
   const starStreak = computeStarStreak();
