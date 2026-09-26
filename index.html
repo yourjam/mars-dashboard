@@ -489,16 +489,14 @@ const COUNTDOWNS = [
      (open items pin to the top with a bell icon until removed).
    - Items drop off automatically the day after their date passes.
    - Items further out than SCHOOL_NEWS_WINDOW_DAYS stay hidden until closer.
-   Last updated from: First Grade News #4 (Sep 4, 2026)
+   Last updated from: First Grade News #7 (Sep 25, 2026)
    ======================================================================== */
 const SCHOOL_NEWS_WINDOW_DAYS = 14;
 
 const SCHOOL_NEWS = [
   { date: null,         title: 'Sign up for parent-teacher conference', note: 'Room 18 · 20 min slots · link in teacher email' },
-  { date: '2026-09-07', title: 'No School — Labor Day',                 note: '' },
-  { date: '2026-09-09', title: 'Fort Day!',                             note: 'Bring a clean sheet, towel, or blanket in its own bag' },
-  { date: '2026-09-11', title: 'Frozen Friday',                         note: 'Popsicle cart by the kindergarten gate' },
   { date: '2026-09-25', title: 'Frozen Friday',                         note: 'Popsicle cart by the kindergarten gate' },
+  { date: '2026-09-28', title: 'Book Swap',                             note: 'Bring gently used books to trade in the library at recess' },
   { date: '2026-09-30', title: 'September reading calendar due',        note: 'Turn in on time to earn a prize' },
   { date: '2026-10-02', title: 'Frozen Friday',                         note: 'Popsicle cart by the kindergarten gate' },
   { date: '2026-10-09', title: 'Frozen Friday',                         note: 'Popsicle cart by the kindergarten gate' },
@@ -509,6 +507,9 @@ const SCHOOL_NEWS = [
 const RECURRING_SCHOOL = [
   { label: 'Library books due',          dayIndex: 5 },  /* Friday */
   { label: 'Friday folder back to school', dayIndex: 1 },  /* Monday */
+  { label: 'Homework due',               dayIndex: 3 },  /* Wednesday */
+  { label: 'Read 20 minutes',            dayIndex: null },  /* every day */
+  { label: 'School snack in MPR before 8:30', dayIndex: null },  /* every day */
 ];
 
 /* ========================================================================
